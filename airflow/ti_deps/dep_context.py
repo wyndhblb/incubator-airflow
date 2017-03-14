@@ -17,7 +17,6 @@ from airflow.ti_deps.deps.dagrun_exists_dep import DagrunRunningDep
 from airflow.ti_deps.deps.exec_date_after_start_date_dep import ExecDateAfterStartDateDep
 from airflow.ti_deps.deps.not_running_dep import NotRunningDep
 from airflow.ti_deps.deps.not_skipped_dep import NotSkippedDep
-from airflow.ti_deps.deps.pool_has_space_dep import PoolHasSpaceDep
 from airflow.ti_deps.deps.runnable_exec_date_dep import RunnableExecDateDep
 from airflow.ti_deps.deps.valid_state_dep import ValidStateDep
 from airflow.utils.state import State
@@ -50,6 +49,8 @@ class DepContext(object):
     :param ignore_depends_on_past: Ignore depends_on_past parameter of DAGs (e.g. for
         Backfills)
     :type ignore_depends_on_past: boolean
+    :param ignore_in_retry_period: Ignore the retry period for task instances
+    :type ignore_in_retry_period: boolean
     :param ignore_task_deps: Ignore task-specific dependencies such as depends_on_past and
         trigger rule
     :type ignore_task_deps: boolean
@@ -62,12 +63,14 @@ class DepContext(object):
             flag_upstream_failed=False,
             ignore_all_deps=False,
             ignore_depends_on_past=False,
+            ignore_in_retry_period=False,
             ignore_task_deps=False,
             ignore_ti_state=False):
         self.deps = deps or set()
         self.flag_upstream_failed = flag_upstream_failed
         self.ignore_all_deps = ignore_all_deps
         self.ignore_depends_on_past = ignore_depends_on_past
+        self.ignore_in_retry_period = ignore_in_retry_period
         self.ignore_task_deps = ignore_task_deps
         self.ignore_ti_state = ignore_ti_state
 
@@ -82,24 +85,19 @@ QUEUEABLE_STATES = {
     State.UP_FOR_RETRY,
 }
 
-# The minimum execution context for task instances to be executed.
-MIN_EXEC_DEPS = {
+# Context to get the dependencies that need to be met in order for a task instance to
+# be backfilled.
+QUEUE_DEPS = {
     NotRunningDep(),
     NotSkippedDep(),
     RunnableExecDateDep(),
-}
-
-# Context to get the dependencies that need to be met in order for a task instance to
-# be backfilled.
-QUEUE_DEPS = MIN_EXEC_DEPS | {
-    ValidStateDep(QUEUEABLE_STATES)
+    ValidStateDep(QUEUEABLE_STATES),
 }
 
 # Dependencies that need to be met for a given task instance to be able to get run by an
 # executor. This class just extends QueueContext by adding dependencies for resources.
 RUN_DEPS = QUEUE_DEPS | {
-    DagTISlotsAvailableDep(),
-    PoolHasSpaceDep(),
+    DagTISlotsAvailableDep()
 }
 
 # TODO(aoen): SCHEDULER_DEPS is not coupled to actual execution in any way and

@@ -97,6 +97,7 @@ Community-contributed Operators
 
 .. autoclass:: airflow.contrib.operators.bigquery_operator.BigQueryOperator
 .. autoclass:: airflow.contrib.operators.bigquery_to_gcs.BigQueryToCloudStorageOperator
+.. autoclass:: airflow.contrib.operators.ecs_operator.ECSOperator
 .. autoclass:: airflow.contrib.operators.gcs_download_operator.GoogleCloudStorageDownloadOperator
 .. autoclass:: airflow.contrib.operators.QuboleOperator
 .. autoclass:: airflow.contrib.operators.hipchat_operator.HipChatAPIOperator
@@ -126,6 +127,8 @@ Variable                            Description
 ``{{ ts }}``                        same as ``execution_date.isoformat()``
 ``{{ ts_nodash }}``                 same as ``ts`` without ``-`` and ``:``
 ``{{ execution_date }}``            the execution_date, (datetime.datetime)
+``{{ prev_execution_date }}``       the previous execution date (if available) (datetime.datetime)
+``{{ next_execution_date }}``       the next execution date (datetime.datetime)
 ``{{ dag }}``                       the DAG object
 ``{{ task }}``                      the Task object
 ``{{ macros }}``                    a reference to the macros package, described below
